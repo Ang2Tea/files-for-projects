@@ -1,0 +1,25 @@
+[init]
+	defaultBranch = main
+[commit]
+	gpgsign = true
+[user]
+	email = test@gmail.com
+	name = test
+	signingkey = key
+
+[alias]
+	clear = "! clear && git status"
+	olog = log --oneline
+
+[core]
+	# editor = code --wait
+
+[diff]
+	tool = vscode
+[difftool "vscode"]
+	cmd = code --wait --diff $LOCAL $REMOTE
+
+[merge]
+	tool = vscode
+[mergetool "vscode"]
+	cmd = code --wait $MERGED
