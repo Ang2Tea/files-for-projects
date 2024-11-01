@@ -15,11 +15,24 @@
 	# editor = code --wait
 
 [diff]
-	tool = vscode
-[difftool "vscode"]
+	tool = vscode_diff
+	algorithm = histogram
+
+[difftool "vscode_diff"]
 	cmd = code --wait --diff $LOCAL $REMOTE
 
 [merge]
-	tool = vscode
-[mergetool "vscode"]
-	cmd = code --wait $MERGED
+	tool = vscode_merge
+	conflictStyle = zdiff3
+
+[mergetool]
+	keepBackup = false
+
+[mergetool "vscode_merge"]
+	cmd = code --wait --merge $MERGED
+
+[push]
+	autoSetupRemote = true
+
+[branch]
+	sort = –committerdate
