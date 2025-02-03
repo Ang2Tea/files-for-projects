@@ -1,10 +1,10 @@
 variables:  
   GIT_CLEAN_FLAGS: -fxd -e ".go"
   GOPATH: $CI_PROJECT_DIR/.go
-  MAIN_PKG_PATH: "./cmd/*"
+  MAIN_PKG_PATH: ./cmd/*
   COVERAGE_EXCLUDE: "_gen.go|http_server" # Регулярка для исключения из покрытия
-  GO_VERSION: "1.23-alpine"
-  GOLANGCI_LINT_VERSION: "v1.63.4"
+  GO_VERSION: 1.23-alpine
+  GOLANGCI_LINT_VERSION: v1.63.4
   JUNIT_REPORT_VERSION: latest
   GOCOVER_COBERTURA_VERSION: latest
 
@@ -16,8 +16,8 @@ default:
         - "go.sum"
       prefix: ${CI_PROJECT_NAME}
     paths:
-      - "${GOPATH}/pkg/mod"
-      - "${GOPATH}/bin"
+      - ${GOPATH}/pkg/mod
+      - ${GOPATH}/bin
     policy: pull
 
 stages:
@@ -31,15 +31,15 @@ prepare: &prepare_config
     <<: *global_cache
     policy: pull-push
   script:
-    - mkdir -p "${GOPATH}"
+    - mkdir -p ${GOPATH}
     - go mod download
 
     # Установка утилит для тестов
-    - go install "github.com/jstemmer/go-junit-report/v2@${JUNIT_REPORT_VERSION}"
-    - go install "github.com/boumenot/gocover-cobertura@${GOCOVER_COBERTURA_VERSION}"
+    - go install github.com/jstemmer/go-junit-report/v2@${JUNIT_REPORT_VERSION}
+    - go install github.com/boumenot/gocover-cobertura@${GOCOVER_COBERTURA_VERSION}
 
     # Установка линтера
-    - go install "github.com/golangci/golangci-lint/cmd/golangci-lint@${GOLANGCI_LINT_VERSION}"
+    - go install github.com/golangci/golangci-lint/cmd/golangci-lint@${GOLANGCI_LINT_VERSION}
 
 .lint_template: &lint_config
   stage: test
