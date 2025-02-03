@@ -1,0 +1,318 @@
+linters:
+  # Disable all linters.
+  # Default: false
+  disable-all: true
+  # Enable specific linter
+  # https://golangci-lint.run/usage/linters/#enabled-by-default
+  enable:
+    # copyloopvar: this linter is disabled because the Go version (1.21.0) of your project is lower than Go 1.22
+    - copyloopvar
+    # intrange: this linter is disabled because the Go version (1.21.0) of your project is lower than Go 1.22
+    #    - intrange
+
+    # (gofmt, govet) Вроде как стандартный линтер, показывает что стоило бы упростить.
+    - gofmt
+    - govet
+
+    # (asasalint) шляпа конечно, но тихий, https://github.com/alingse/asasalint
+    - asasalint
+    # (asciicheck) ругается на сиволы не asc, т.е. на весь русский код!
+    #    - asciicheck
+    - bidichk
+    - bodyclose
+    # (containedctx) Находит структуры у которых есть поле context.Context
+    #    - containedctx
+    # (contextcheck) Ищет места, где 'якобы' нужно было передать контекст, хотя мне кажется что он не нужен, слишком много срабатываний
+    #    - contextcheck
+
+    # (cyclop) Считает цикличную сложность функций, а это в большой степени указывает на сложность покрытия тестами, но ни в коем случае не на читаемость:  он также указывает на большие switch или последовательности if, которые не стоит разбивать.
+    #    - cyclop
+    - decorder
+    # (depguard) Думаю очень полезная штука, с помощью этого линта, можно ограничить импорты пакетов, но нужно настроить.
+    #    - depguard
+    - dogsled
+    # (dupl) Находит повторяющийся код (достаточно много нашел. Много пишет в консоли.)
+    #    - dupl наверное после мержа сделаю
+    # (dupword) Находит повторяющиеся слова в комментариях или строках, думаю не особо полезный.
+    - dupword
+    # (durationcheck) Находит конструкции, где умножается time.Duration на time.Duration, думаю не особо полезный.
+    - durationcheck
+    # (errcheck) Находит ошибки, мы забыли обработать.
+    - errcheck
+    # (errchkjson) Требует проверять ошибку при конвертации json
+    - errchkjson
+    # (errname) Требует соответствия правилам нейминга ошибок. В соответствии с конверцией https://go.dev/wiki/Errors#naming
+    - errname
+    # (errorlint) Находит ошибки, проверки ошибок
+    #    - errorlint
+    # (execinquery) archived
+    #    - execinquery
+    # (exhaustive) Проверяет, что мы обработали любые варранты при switch перечислений
+    # пс. У нас много мест где мы обрабатываем именно некоторые из вариантов перечисления, можно сказать происходит ложное срабатывание,
+    # нужно придумать как этого избежать, т.к. линт я думаю был бы полезен, если бы нашел ошибку при преобразовании типа.
+    #    - exhaustive
+    # (exhaustruct) Требует при создании структуры заполнять сразу все поля, это может быть полезно,
+    # что бы выявлять места, где забыл заполнить какое-то из полей. Очень много срабатываний.
+    # Возможно, можно сделать что бы линтер проверял только дто
+    #    - exhaustruct
+    # - exportloopref
+    # Не любит fmt.Print, print, println
+    # Думаю, он приходиться, когда нужно будет избавиться от выводов
+    #    - forbidigo
+    # Требует делать проверки при попытке приведения типов.
+    #    - forcetypeassert
+    # (funlen) Не любит функции длиннее 60 символов
+    # У нас много функций, длиннее 60 символов, очень ругается.
+    # Так же ругается на большое кол-во операторов: Function 'GetPlaces' has too many statements (41 > 40)
+    - funlen
+    # (gci) Пока не разобрался что он делает, но ругается:
+    # File is not `gci`-ed with --skip-generated -s standard -s default
+    #    - gci  просто лишний повод бить ganya
+    - ginkgolinter
+    - gocheckcompilerdirectives
+    # (gochecknoglobals) Ругается на глобальные переменные
+    #    - gochecknoglobals
+    # (gochecknoinits) просто просит не писать init() функций
+    #    - gochecknoinits
+    - gochecksumtype
+    - gocognit
+    - goconst
+    # (gocritic) полезная штука.
+    #  сказал что не следует называть переменные с большой буквы
+    #  показал switch с одним case
+    #  попросил ставить пробел между '#' и комментарием
+    #    - gocritic по всякай фигне докапывается, пойду лучше функции уменьшать в длину
+    - gocyclo
+    # (godot) Хочет что бы в конце комментария была точка
+    # пс. Довольно странная штука, нашёл только 3 комментария без точки
+    #    - godot
+    # (godox) ищет комментарии с todo
+    #    - godox #TODO я оставляю на потом
+    # (gofumpt) Что-то типа gofmt, но имеет более строгие правила (https://github.com/mvdan/gofumpt)
+    - gofumpt
+    - goheader
+    # (goimports) Должен что-то делать с импортами, но я не понял что именно.
+    #    - goimports
+    - gomoddirectives
+    - gomodguard
+    - goprintffuncname
+    # (gosec)
+    # Помог найти потенциальный баг, в попытке присвоить ссылку на переменную объявленную в цикле (адрес будет всегда одинаковый)
+    # Жалуется на использование не безопасного скрипта хеширования crypto/md5
+    # Находит хардкод данных авторизации, есть ложные срабатывания
+    # Почему-то ему не нравится пакет math/rand, скорее всего переживает что мы его можем использовать для генерации хеша авторизации
+    # Ругается на io.Copy - Potential DoS vulnerability via decompression bomb
+    - gosec
+    # (gosimple) Находит код который можно упростить, например вызов return в конце функции без возвращаемых значений
+    - gosimple
+    # (gosmopolitan) Что то связанное с временными зонами https://github.com/xen0n/gosmopolitan
+    #    - gosmopolitan
+    - grouper
+    - importas
+    # (inamedparam) требует именовать параметры интерфейсов.
+    - inamedparam
+    # (ineffassign) находит неэффективное присваивания, когда значение переменной задается и не используется в дальнейшем.
+    - ineffassign
+    - interfacebloat
+    # (ireturn) Запрещает возвращать из функций интерфейсы. Думаю это нам не нужно.
+    #    - ireturn
+    # (lll) Жалуется на слишком длинные строки, вроде как, от 120 символов.
+    #    - lll
+    - loggercheck
+    - maintidx
+    - makezero
+    - mirror
+    # (misspell) Находит банальные орфографические ошибки, подсказывает как исправить `recived` is a misspelling of `received`
+    - misspell
+    # (musttag) Обязует структуры иметь теги 'json', если структура используется функцией json.Marshal и json.Unmarshal
+    # ps Кажется есть баг, происходит ложное срабатывание, для структур которые объявлены внутри функции. Нужно проверить это,
+    # если подтвердиться, стоит временно отказаться от него и написать задачу на гите.
+    - musttag
+    #    - nakedret бесполезно
+    # (nestif) Находит сложные конструкции со множеством условий, вложенные условия, рассчитывает сложность конструкции
+    - nestif
+    - nilerr
+    # (nilnil) Находит возврат `return nil, nil`
+    #    - nilnil
+    # (nlreturn) Требует наличия пустой строки перед return, break, continue
+    # как по мне, очень спорный смысл.
+    #    - nlreturn
+    # (noctx) Находит отправку http запроса, без передачи контекста
+    - noctx
+    - nolintlint
+    # (nonamedreturns) Просит не называть возвращаемые значения функций,
+    # думаю пока что стоит отказаться, т.к. польза сомнительная
+    #    - nonamedreturns
+    # (nosprintfhostport) Находит использование fmt.Sprintf с параметром host:port
+    # Думаю это бесполезно.
+    - nosprintfhostport
+    # (paralleltest) Находит тесты, которые запускаются в цикле, просит сделать запуск таких тестов параллельным
+    #    - paralleltest
+    # (perfsprint) Находит места, где можно было бы упростить использование fmt.Sprintf
+    - perfsprint
+    # (prealloc) прикольная штука, находит места, где стоило бы заранее выделить память для массива.
+    - prealloc
+    # (predeclared) Находит объявления которые затеняют стандартные команды, например new, make, uint и т.д.
+    - predeclared
+    - promlinter
+    - protogetter
+    - reassign
+    # (revive) Жалуется на наименование переменных, классов, названия пакетов.
+    # Ругается на капс, ругается на нижние подчеркивания
+    # Рекомендует Писать капсом аббревиатуры
+    #    - revive  # из всего функционала нужна только проверка аббревиатур
+    # (rowserrcheck) Проверяет, что ошибка для sql.Rows была проверенна.
+    - rowserrcheck
+    - sloglint
+    - spancheck
+    - sqlclosecheck
+    # (staticcheck) Очень популярный линтер.
+    # Определяет достаточно сложные конструкции, и предлагает как сделать лучше.
+    - staticcheck
+    # (stylecheck) Определяет нарушение в обще принятой стилистике в go
+    - stylecheck
+    # (tagalign) Следит за выравниванием тегов и их порядком,
+    # вроде как может выравнивать их автоматический https://github.com/4meepo/tagalign пока что выключил.
+    #    - tagalign
+
+    # (tagliatelle) Проверяет что все теги, указанны в заданном формате например (snake case)
+    # Думаю, что у нас может быть использованы разные форматы, так что может возникнуть проблема
+    #    - tagliatelle
+    - tenv
+    - testableexamples
+    # (testifylint) Специализируется на проверках стилистике testify
+    - testifylint
+    # (testpackage) Заставляет все тесты писать в отдельном пакете *_test, а если требуется тесты для локальных функций,
+    # предлагает писать название файла _internal_test.go
+    # Как по мне ничем не обоснованное ограничение. Думаю от этого стоит отказаться.
+    #    - testpackage
+
+    # (thelper) Хочет, что бы все функции, которые принимают *testing.T являлись Helper
+    # В этом есть логика, но не уверен, что это правильно Так что стоит временно отказаться от него.
+    #    - thelper
+    - typecheck
+    # (unconvert) находит то что не может быть конвертированно,
+    # например то что уже имеет тип к которому вы пытаетесь привести
+    - unconvert
+    # (unparam) находит не используемые параметры или параметры которые всегда возвращают одно и то-же значение.
+    # не используемые функции,
+    #    - unparam отодвигается на пятый план
+    # (unused) находит неиспользуемые функции
+    #    - unused
+    - usestdlibvars
+    # (varnamelen) просит делать названия переменных длиннее.
+    # Как по мне, в этом нет необходимости, он ругается на названия переменных, такие как id, tx, to, db, i
+    # тем не менее, его можно настроить, что бы он допускал некоторые названия переменных для конкретных типов,
+    # тогда это будет достаточно полезно. Но пока выключим его.
+    #    - varnamelen
+
+    # (wastedassign) нашел переменную, которой было задано значение, но переназначено, до использования её значения.
+    - wastedassign
+    # (whitespace) Находит лишние новые строки.
+    #    - whitespace   эти строки зачастую выглядят лучше, чем если бы их не было
+    # (wrapcheck) Требует что бы при пробросе ошибки, происходило оборачивание ошибки (Wrap).
+    # Это имеет смысл, но я не знаю подходящего решения для этой проблемы.
+    #    - wrapcheck
+    # (wsl) Очень агрессивный линтер, жалуется на всё подряд. Заставляет везде ставить новые строки.
+    # Должен помогать писать более понятный код, за счет строгого требования к новым строкам, мне нравится
+    # эта идея, но думаю, что его внедрение будет достаточно дорого стоить. Так что стоит временно отказаться от него.
+    - wsl
+
+    - zerologlint
+  # Просто не нашлись.
+  #    - canonicalheader
+  #    - err113
+  #    - fatcontext
+  #    - tparallel
+
+  # Оно вроде бы не нашлось, но будто бы был вывод gomnd, возможно от него
+  # Выводит "Магические числа" - числа которые не откуда не берутся, хардкодно записаны в коде, возможно их стоит задикларировать.
+  #    - mnd
+
+  # Enable presets.
+  # https://golangci-lint.run/usage/linters
+  # Default: []
+  #  presets:
+  #    - bugs
+  #    - comment
+  #    - complexity
+  #    - error
+  #    - format
+  #    - import
+  #    - metalinter
+  #    - module
+  #    - performance
+  #    - sql
+  #    - style
+  #    - test
+  #    - unused
+
+  # Enable only fast linters from enabled linters set (first run won't be fast)
+  # Default: false
+  fast: false
+
+linters-settings:
+
+  staticcheck:
+    # SAxxxx checks in https://staticcheck.io/docs/configuration/options/#checks
+    # Default: ["*"]
+    checks: [ "all", "-SA1019"]
+
+#  stylecheck:
+#    initialisms: ["ACL", "API", "ASCII", "CPU", "CSS", "DNS", "EOF", "GUID", "HTML", "HTTP", "HTTPS", "ID", "IP", "JSON", "QPS", "RAM", "RPC", "SLA", "SMTP", "SQL", "SSH", "TCP", "TLS", "TTL", "UDP", "UI", "GID", "UID", "UUID", "URI", "URL", "UTF8", "VM", "XML", "XMPP", "XSRF", "XSS", "SIP", "RTP", "AMQP", "DB", "TS"]
+
+#  revive:
+#    enable-all-rules: true
+#    rules:
+#      - name: unused-parameter
+#        disabled: true
+#
+#      - name: line-length-limit # когда-нибудь мы к этому придем.
+#        disabled: true
+#
+#      - name: unchecked-type-assertion
+#        disabled: true
+
+issues:
+  exclude-rules:
+    #    - path: '/mock(.+)'
+    #      linters:
+    #        - revive
+    #    - path: './schemas/'
+    #      linters:
+    #        - revive
+
+    - path: '(.+)_gen\.go'
+      linters:
+        - stylecheck
+
+    - path: "/ogen_adapter/"
+      linters:
+        - stylecheck
+
+    - path: '(.+)_test\.go'
+      linters:
+        - funlen
+        - maintidx
+        - gocognit
+        - dupl # не приоритетно вообще
+        - cyclop # его задача - сложность покрытия тестами, а в тестах ему делать нечего
+        - gosec
+        - gochecknoinits # мне они нравятся в тестах?
+#    - path: user_interfaces
+#      linters:
+#        - stylecheck
+#    - path: loyalty_lite
+#      linters:
+#        - stylecheck
+#    - path: orm_
+#      linters:
+#        - stylecheck
+#    - path: http_server
+#      linters:
+#        - stylecheck
+#    - path: swaggerdocs
+#      linters:
+#        - stylecheck
+#  exclude-dirs:
+#    - adapters/http_server/
