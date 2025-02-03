@@ -12,3 +12,7 @@
 
 ## Dockerfile и dockerignore
 Файлы являются базовыми и для большинства операций и задач потребуют доработки, но они могу стать не плохой отправной точкой в проекте при этом соответствуя ***Good Practices***.
+
+## VSCode
+Все возможные файлы для vscode:
+- [Launch for Go](https://github.com/golang/vscode-go/wiki/debugging)
