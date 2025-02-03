@@ -9,9 +9,6 @@ variables:
   GOCOVER_COBERTURA_VERSION: latest
 
 default:
-  tags:
-    # Нужно заменять на стои tags 
-    - docker
   image: golang:${GO_VERSION}
   cache: &global_cache
     key:
