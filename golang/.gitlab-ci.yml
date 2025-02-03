@@ -1,102 +1,116 @@
-variables:
+variables:  
   GIT_CLEAN_FLAGS: -fxd -e ".go"
-  TZ: Europe/Moscow
   GOPATH: $CI_PROJECT_DIR/.go
-
-#https://docs.gitlab.com/ee/development/go_guide/
+  MAIN_PKG_PATH: "./cmd/*"
+  COVERAGE_EXCLUDE: "_gen.go|http_server" # Регулярка для исключения из покрытия
+  GO_VERSION: "1.23-alpine"
+  GOLANGCI_LINT_VERSION: "v1.63.4"
+  JUNIT_REPORT_VERSION: latest
+  GOCOVER_COBERTURA_VERSION: latest
 
 default:
-  image: golang:1.23-alpine
+  tags:
+    # Нужно заменять на стои tags 
+    - docker
+  image: golang:${GO_VERSION}
   cache: &global_cache
-    policy: pull
     key:
       files:
         - "go.sum"
-    untracked: true
-    unprotect: true
-    when: on_success
+      prefix: ${CI_PROJECT_NAME}
     paths:
-      - ".go/pkg/mod"
-      - ".go/bin"
+      - "${GOPATH}/pkg/mod"
+      - "${GOPATH}/bin"
+    policy: pull
 
 stages:
   - prepare
   - test
   - build
 
-prepare:
-  tags:
-    - docker
+prepare: &prepare_config
   stage: prepare
   cache:
     <<: *global_cache
     policy: pull-push
   script:
-    - mkdir -p .go
+    - mkdir -p "${GOPATH}"
     - go mod download
 
-    # modules for tests
-    - go install github.com/jstemmer/go-junit-report/v2@latest
-    - go get github.com/boumenot/gocover-cobertura
-    - go install github.com/boumenot/gocover-cobertura
+    # Установка утилит для тестов
+    - go install "github.com/jstemmer/go-junit-report/v2@${JUNIT_REPORT_VERSION}"
+    - go install "github.com/boumenot/gocover-cobertura@${GOCOVER_COBERTURA_VERSION}"
 
-    # modules for linter
-    - go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.63.4
+    # Установка линтера
+    - go install "github.com/golangci/golangci-lint/cmd/golangci-lint@${GOLANGCI_LINT_VERSION}"
 
-lints:
-  tags:
-    - docker
+.lint_template: &lint_config
   stage: test
   script:
-    # Write the code coverage report to gl-code-quality-report.json
-    # and print linting issues to stdout in the format: path/to/file:line description
-    # remove `--issues-exit-code 0` or set to non-zero to fail the job if linting issues are detected
-    - .go/bin/golangci-lint run --print-issued-lines=false --out-format code-climate:gl-code-quality-report.json,line-number
+    - ${GOPATH}/bin/golangci-lint run
+      --print-issued-lines=false 
+      --out-format code-climate:gl-code-quality-report.json,line-number
   artifacts:
     reports:
       codequality: gl-code-quality-report.json
     paths:
       - gl-code-quality-report.json
+    expire_in: 1 day
 
-tests:
-  tags:
-    - docker
+.test_template: &test_config
   stage: test
   script:
-    # go test ./...
-    - go test -v -coverpkg=gitlab.appricot.ru/... -coverprofile=cover.out.tmp $(go list ./... | grep -v /vendor/) | tee report.txt
-
-    # исключить из cover.out сгенерённые файлы
-    - cat cover.out.tmp | grep -ve "_gen.go" -e "http_server" > cover.out
-
-    # junit report
-    - .go/bin/go-junit-report -set-exit-code < report.txt > junit.xml
-    # cobertura
-    - .go/bin/gocover-cobertura < cover.out > coverage.xml
-    # output coverage results
-    - go tool cover -func cover.out
-
-  coverage: '/total:\t+\(statements\)\t+(\d+\.\d+)%/'
+    - mkdir -p reports
+    - go test -v -coverpkg=./... -coverprofile=reports/cover.out.tmp ./... 2>&1 | tee reports/test-report.txt
+    - grep -vE "${COVERAGE_EXCLUDE}" reports/cover.out.tmp > reports/cover.out
+    - ${GOPATH}/bin/go-junit-report < reports/test-report.txt > reports/junit.xml
+    - ${GOPATH}/bin/gocover-cobertura < reports/cover.out > reports/coverage.xml
+    - go tool cover -func reports/cover.out
   artifacts:
-    when: on_success
     reports:
-      junit:
-        - junit.xml
+      junit: reports/junit.xml
       coverage_report:
         coverage_format: cobertura
-        path: coverage.xml
+        path: reports/coverage.xml
     paths:
-      - cover.out
-      - report.txt
-      - cover.out.tmp
+      - reports/
+    expire_in: 1 day
+  coverage: '/total:\t+\(statements\)\t+(\d+\.\d+)%/'
 
-build:
-  tags:
-    - docker
+.build_template: &build_config
   stage: build
   script:
-    - mkdir -p out
-    - go build -o appricot-cli ./cmd/appricot-cli/main.go
+    - mkdir -p bin
+    - for pkg in $(go list ${MAIN_PKG_PATH}); do
+      CMD_NAME=$(basename ${pkg});
+      go build -o bin/${CMD_NAME} ${pkg};
+      done
   artifacts:
     paths:
-      - out
+      - bin/
+    expire_in: 1 week
+
+
+
+# # Пример использования
+# include:
+#   - local: 'template.gitlab-ci.yml'
+
+# variables:
+#   TZ: Europe/Moscow
+#   GO_VERSION: "1.23-alpine"
+#   GOLANGCI_LINT_VERSION: "v1.63.4"
+
+# # Jobs
+# golangci-lint:
+#   extends: .lint_template
+#   needs: ["prepare"]
+
+# unit-tests:
+#   extends: .test_template
+#   needs: ["prepare"]
+
+# build:
+#   extends: .build_template
+#   needs: ["prepare"]
+
